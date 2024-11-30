@@ -1,4 +1,4 @@
-name: streamlitenv
+name: chatbot_frontend
 channels:
   - defaults
   - https://repo.anaconda.com/pkgs/main
