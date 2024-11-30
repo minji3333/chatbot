@@ -1,6 +1,9 @@
+import requests
 import streamlit as st
 from streamlit_chat import message
 from datetime import datetime
+
+BASE_URL = "http://127.0.0.1:8000/chatbot/api"
 
 button_css = """
 <style>
@@ -51,11 +54,19 @@ products_css = """
 """
 
 def get_main_categories():
-    return ["영상/음향", "미용/욕실", "주방가전", "계절가전"]
+    response = requests.get(f"{BASE_URL}/main-categories")
+    if response.status_code == 200:
+        return response.json().get("data", [])
+    else:
+        st.error("Failed to fetch main categories.")
 
 
-def get_sub_categories():
-    return ["에어컨", "온풍기", "제습기", "서큘레이터", "그 외"]
+def get_sub_categories(main_category_id):
+    response = requests.get(f"{BASE_URL}/main-categories/{main_category_id}/sub-categories")
+    if response.status_code == 200:
+        return response.json().get("data", [])
+    else:
+        st.error("Failed to fetch sub categories.")
 
 
 def get_products():
@@ -170,20 +181,20 @@ def render_chat_ui():
     if not st.session_state["selected_main_category"]:
         render_main_categories()
     elif not st.session_state["selected_sub_category"]:
-        render_sub_categories()
+        render_sub_categories(st.session_state["selected_main_category"]["id"])
     elif not st.session_state["search_filters"] or not st.session_state["selected_product"]:
         render_search_filters()
 
 
 def on_click_main_category_btn(main_category):
     st.session_state["selected_main_category"] = main_category
-    st.session_state["messages"].append({"role": "user", "content": main_category})
-    st.session_state["messages"].append({"role": "assistant", "content": f"{main_category}을 찾으시는군요! 어떤 제품을 찾으시나요?"})
+    st.session_state["messages"].append({"role": "user", "content": main_category["name"]})
+    st.session_state["messages"].append({"role": "assistant", "content": f"{main_category['name']}을 찾으시는군요! 어떤 제품을 찾으시나요?"})
 
 
 def on_click_sub_category_btn(sub_category):
     st.session_state["selected_sub_category"] = sub_category
-    st.session_state["messages"].append({"role": "user", "content": sub_category})
+    st.session_state["messages"].append({"role": "user", "content": sub_category["name"]})
     st.session_state["messages"].append({"role": "assistant", "content": "원하는 조건이 있으신가요?"})
 
 
@@ -205,15 +216,15 @@ def render_main_categories():
     columns = st.columns(len(main_categories))
     for i, main_category in enumerate(main_categories):
         with columns[i]:
-            st.button(main_category, on_click=on_click_main_category_btn, args=(main_category,))
+            st.button(main_category["name"], on_click=on_click_main_category_btn, args=(main_category,))
 
 
-def render_sub_categories():
-    sub_categories = get_sub_categories()
+def render_sub_categories(main_category_id):
+    sub_categories = get_sub_categories(main_category_id)
     sub_columns = st.columns(len(sub_categories))
     for i, sub_category in enumerate(sub_categories):
         with sub_columns[i]:
-            st.button(sub_category, on_click=on_click_sub_category_btn, args=(sub_category,))
+            st.button(sub_category["name"], on_click=on_click_sub_category_btn, args=(sub_category,))
 
 
 def render_search_filters():
