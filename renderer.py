@@ -1,6 +1,7 @@
 import pandas as pd
 import altair as alt
 import streamlit as st
+import pandas as pd
 from utils import generate_short_id
 from css import BUTTON_CSS, PRODUCTS_CSS
 
@@ -73,16 +74,22 @@ class ChatbotRenderer:
                     st.image("https://img.hankyung.com/photo/202406/01.36942977.1.jpg")
                     st.text(f"출시가격: {product['price']:,}원")
                     st.text(f"제조사: {product['manufacturer']}({product['release_year']})")
-                    st.text(f"에너지 효율: {product['energy_efficiency']} ({product['power_consumption']}W)")
+                    st.text(f"에너지 효율: {product['energy_efficiency']}({product['power_consumption']}W)")
+                    st.text("\n")
                     self.render_aspect_chart(aspect_ratio["aspect_ratios"])
-                    st.button("최저가 구매하기", key=f"buy_{i}_{generate_short_id()}", on_click=self.select_product, args=(product,))
-        
-        if self.session.get_state("conditions_submitted"):
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("처음으로", key=f"restart_{generate_short_id()}", on_click=self.reset_to_start)
-            with col2:
-                st.button("다시 입력", key=f"reset_{generate_short_id()}", on_click=self.reset_conditions)
+                    st.button("리뷰 확인하기", key=f"review_{i}_{generate_short_id()}", on_click=self.render_reviews, args=(recommended,), use_container_width=True)
+                    st.button("최저가 구매하기", key=f"buy_{i}_{generate_short_id()}", on_click=self.select_product, args=(product,), use_container_width=True)
+                    
+        # if self.session.get_state("conditions_submitted") and not self.session.get_state("checked_reviews"):
+        #     self.render_restart_reset_button()
+
+    def render_restart_reset_button(self):
+        print("hello")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("처음으로", key=f"restart_{generate_short_id()}", on_click=self.reset_to_start)
+        with col2:
+            st.button("다시 입력", key=f"reset_{generate_short_id()}", on_click=self.reset_conditions)
 
     def render_aspect_chart(self, data):
         chart_data = pd.DataFrame({
@@ -141,6 +148,28 @@ class ChatbotRenderer:
         </script>
         """
         st.components.v1.html(js_code)
+
+    def render_reviews(self, product_data):
+        product = product_data["product"]
+        reviews = product_data["matching_reviews"]
+
+        all_reviews = []
+        for aspect in reviews:
+            for review in aspect["reviews"]:
+                all_reviews.append({
+                    "Aspect": aspect["aspect_name"],
+                    "Review": review["raw_text"]
+                })
+
+        reviews_df = pd.DataFrame(all_reviews)
+        table_md = reviews_df.to_markdown(index=False)
+
+        self.session.set_state("checked_reviews", True)
+        self.session.add_message("assistant", f"{product['name']} 리뷰 요약\n\n{table_md}")
+
+        # print(self.session.get_state("conditions_submitted"), self.session.get_state("checked_reviews"))
+        # if self.session.get_state("conditions_submitted") and self.session.get_state("checked_reviews"):
+        #     self.render_restart_reset_button()
 
     def reset_to_start(self):
         st.markdown(BUTTON_CSS, unsafe_allow_html=True)

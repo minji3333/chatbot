@@ -10,6 +10,7 @@ class ChatbotSession:
         self.set_state("conditions", None)
         self.set_state("conditions_submitted", False)
         self.set_state("selected_product", None)
+        self.set_state("checked_reviews", False)
 
     def add_message(self, role, content, callback=None):
         self.get_state("messages").append({"role": role, "content": content, "callback": callback})
