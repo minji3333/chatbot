@@ -1,0 +1,47 @@
+import streamlit as st
+from streamlit_chat import message
+from api import APIClient
+from session import ChatbotSession
+from renderer import ChatbotRenderer
+from css import BUTTON_CSS
+
+class ChatbotUI:
+    def __init__(self):
+        self.session = ChatbotSession()
+        self.api_client = APIClient()
+        self.renderer = ChatbotRenderer(self.session, self.api_client)
+
+    def render_chat_ui(self):
+        # 기존 메세지 표시
+        for i, msg in enumerate(self.session.get_state("messages")):
+            # 메세지 출력 방법
+            # 1. default, reloading 버벅임 없음
+            # with st.chat_message(msg["role"]):
+                # st.write(msg["content"])
+
+            # 2. stream-chat, reloading 버벅임
+            message(msg["content"], is_user=(msg["role"] == "user"), key=f"message_{i}")
+            if "callback" in msg and msg["callback"]:
+                msg["callback"]()
+        
+        # 상태에 따라 다른 UI 요소 표시
+        if not self.session.get_state("selected_main_category"):
+            self.renderer.render_main_categories()
+        elif not self.session.get_state("selected_sub_category"):
+            self.renderer.render_sub_categories()
+        elif not self.session.get_state("conditions") or not self.session.get_state("selected_product"):
+            self.renderer.render_conditions_input()
+
+    def run(self):
+        st.set_page_config(page_title="Chatbot", page_icon="🤖", layout="wide")
+        st.title("🤖 Chatbot")
+        st.caption("💬 Review-Based Home Appliance Recommendation Chatbot")
+        st.markdown(BUTTON_CSS, unsafe_allow_html=True)
+        self.render_chat_ui()
+
+
+if __name__ == "__main__":
+    if "ui" not in st.session_state:
+        st.session_state["ui"] = ChatbotUI()
+    
+    st.session_state["ui"].run()
