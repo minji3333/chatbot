@@ -3,7 +3,6 @@ import altair as alt
 import streamlit as st
 import pandas as pd
 from utils import generate_short_id
-from css import BUTTON_CSS, PRODUCTS_CSS
 
 class ChatbotRenderer:
     def __init__(self, session, api_client):
@@ -75,14 +74,13 @@ class ChatbotRenderer:
             self.session.add_message("assistant", f"{aspects} 기준으로 추천된 제품입니다.\n\n마음에 드는 제품이 없다면 조건을 다시 입력해주세요!", callback=self.render_recommended_products)
 
     def render_recommended_products(self):
-        st.markdown(PRODUCTS_CSS, unsafe_allow_html=True)
-
         results = self.session.get_state("results")
 
         if not results:
             return
         
-        columns = st.columns(len(results["products"]))
+        container = st.container()
+        columns = container.columns(len(results["products"]))
         for i, recommended in enumerate(results["products"]):
             with columns[i]:
                 product = recommended['product']
@@ -174,6 +172,7 @@ class ChatbotRenderer:
         table_md = reviews_df.to_markdown(index=False)
 
         self.session.set_state("checked_reviews", True)
+        self.session.add_message("user", f"{product['name']} 리뷰 확인하기")
         self.session.add_message("assistant", f"{product['name']} 리뷰 요약\n\n{table_md}")
 
         if self.session.get_state("conditions_submitted") and self.session.get_state("checked_reviews"):
@@ -187,7 +186,6 @@ class ChatbotRenderer:
             st.button("다시 입력", key=f"reset_{generate_short_id()}", on_click=self.reset_conditions)
 
     def reset_to_start(self):
-        st.markdown(BUTTON_CSS, unsafe_allow_html=True)
         self.session.reset()
         self.session.add_message("user", "처음으로")
         self.session.add_message("assistant", "안녕하세요. 사용자 리뷰 기반으로 가전제품을 추천해드리는 챗봇 \"CHATBOT\" 입니다.\n\n어떤 가전제품을 찾고 계신가요? 😊")

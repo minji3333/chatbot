@@ -1,16 +1,7 @@
-BUTTON_CSS = """
+CSS = """
 <style>
-.st-emotion-cache-ocqkz7 {
-    margin-left: 60px;
-}
-
 .stHorizontalBlock {
-    display: flex;
-    gap: 1;
-}
-
-.st-emotion-cache-12w0qpk {
-    flex: none;
+    margin-left: 60px;
 }
 
 .stColumn {
@@ -20,15 +11,7 @@ BUTTON_CSS = """
     flex: none;
 }
 
-.stButton {
-    margin: 0;
-}
-</style>
-"""
-
-PRODUCTS_CSS = """
-<style>
-.stHorizontalBlock {
+[data-testid="stVerticalBlock"] > [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"] {
     display: block;
     flex-direction: row;
     overflow-x: scroll;
@@ -36,7 +19,7 @@ PRODUCTS_CSS = """
     white-space: nowrap; 
 }
 
-.stColumn {
+[data-testid="stVerticalBlock"] > [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
     display: inline-block;
     width: 300px;
     flex: none;

@@ -3,7 +3,7 @@ from streamlit_chat import message
 from api import APIClient
 from session import ChatbotSession
 from renderer import ChatbotRenderer
-from css import BUTTON_CSS
+from css import CSS
 
 class ChatbotUI:
     def __init__(self):
@@ -41,7 +41,7 @@ class ChatbotUI:
         st.set_page_config(page_title="Chatbot", page_icon="🤖", layout="wide")
         st.title("🤖 Chatbot")
         st.caption("💬 Review-Based Home Appliance Recommendation Chatbot")
-        st.markdown(BUTTON_CSS, unsafe_allow_html=True)
+        st.markdown(CSS, unsafe_allow_html=True)
         self.render_chat_ui()
 
 
