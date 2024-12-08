@@ -2,7 +2,7 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 import pandas as pd
-from utils import generate_short_id
+from utils.utils import generate_short_id
 
 class ChatbotRenderer:
     def __init__(self, session, api_client):

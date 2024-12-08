@@ -1,9 +1,9 @@
 import streamlit as st
 from streamlit_chat import message
-from api import APIClient
-from session import ChatbotSession
-from renderer import ChatbotRenderer
-from css import CSS
+from utils.utils import load_css
+from api.api_client import APIClient
+from session.session import ChatbotSession
+from ui.renderer import ChatbotRenderer
 
 class ChatbotUI:
     def __init__(self):
@@ -14,11 +14,10 @@ class ChatbotUI:
     def render_chat_ui(self):
         # 기존 메세지 표시
         for i, msg in enumerate(self.session.get_state("messages")):
-            # 메세지 출력 방법
+            # <메세지 출력 방법>
             # 1. default, reloading 버벅임 없음
             # with st.chat_message(msg["role"]):
                 # st.write(msg["content"])
-
             # 2. stream-chat, reloading 버벅임
             message(msg["content"], is_user=(msg["role"] == "user"), key=f"message_{i}")
             if "callback" in msg and msg["callback"]:
@@ -38,10 +37,11 @@ class ChatbotUI:
             self.renderer.render_restart_reset_button()
 
     def run(self):
+        css_content = load_css("./src/ui/styles.css")
         st.set_page_config(page_title="Chatbot", page_icon="🤖", layout="wide")
         st.title("🤖 Chatbot")
         st.caption("💬 Review-Based Home Appliance Recommendation Chatbot")
-        st.markdown(CSS, unsafe_allow_html=True)
+        st.markdown(f"<style>{css_content}</style>", unsafe_allow_html=True)
         self.render_chat_ui()
 
 

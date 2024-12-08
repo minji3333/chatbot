@@ -14,3 +14,8 @@ def scroll_to_bottom():
 # 현재 시간 기반 고유 ID 생성
 def generate_short_id():
     return datetime.now().strftime('%Y%m%d%H%M%S%f')
+
+
+def load_css(file_path):
+    with open(file_path) as f:
+        return f.read()
