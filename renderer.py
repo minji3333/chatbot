@@ -33,8 +33,24 @@ class ChatbotRenderer:
     def select_sub_category(self, sub_category):
         self.session.set_state("selected_sub_category", sub_category)
         self.session.add_message("user", sub_category["name"])
-        self.session.add_message("assistant", "원하는 조건을 입력해주세요!")
+        if sub_category["name"] == "기타":
+            self.session.set_state("custom_sub_category", True)
+            self.session.add_message("assistant", "찾고있는 상품을 직접 입력해주세요!")
+        else:
+            self.session.set_state("custom_sub_category", False)
+            self.session.add_message("assistant", "원하는 조건을 입력해주세요!")
 
+    def render_sub_category_input(self):
+        if not self.session.get_state("sub_category_input"):
+            unique_key = f"sub_category_input_{generate_short_id()}"
+            sub_category_input = st.chat_input("상품을 입력해주세요..", key=unique_key, on_submit=self.submit_sub_category, args=(unique_key,))
+
+    def submit_sub_category(self, unique_key):
+        sub_category_input = self.session.get_state(unique_key)
+        self.session.set_state("sub_category_input", sub_category_input)
+        self.session.add_message("user", sub_category_input)
+        self.session.add_message("assistant", "원하는 조건을 입력해주세요!")
+        
     def render_conditions_input(self):
         if not self.session.get_state("conditions_submitted"):
             unique_key = f"current_input_{generate_short_id()}"
@@ -42,9 +58,10 @@ class ChatbotRenderer:
         
     def submit_conditions(self, unique_key):
         conditions = self.session.get_state(unique_key)
+        sub_category_input = self.session.get_state("sub_category_input")
         selected_sub_category = self.session.get_state("selected_sub_category")
 
-        results = self.api_client.get_recommended_products(selected_sub_category["id"], conditions)
+        results = self.api_client.get_recommended_products(selected_sub_category["id"], conditions, sub_category_input)
 
         self.session.set_state("conditions", conditions)
         self.session.add_message("user", conditions)
@@ -77,19 +94,11 @@ class ChatbotRenderer:
                     st.text(f"에너지 효율: {product['energy_efficiency']}({product['power_consumption']}W)")
                     st.text("\n")
                     self.render_aspect_chart(aspect_ratio["aspect_ratios"])
-                    st.button("리뷰 확인하기", key=f"review_{i}_{generate_short_id()}", on_click=self.render_reviews, args=(recommended,), use_container_width=True)
-                    st.button("최저가 구매하기", key=f"buy_{i}_{generate_short_id()}", on_click=self.select_product, args=(product,), use_container_width=True)
-                    
-        # if self.session.get_state("conditions_submitted") and not self.session.get_state("checked_reviews"):
-        #     self.render_restart_reset_button()
-
-    def render_restart_reset_button(self):
-        print("hello")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.button("처음으로", key=f"restart_{generate_short_id()}", on_click=self.reset_to_start)
-        with col2:
-            st.button("다시 입력", key=f"reset_{generate_short_id()}", on_click=self.reset_conditions)
+                    st.button("리뷰 확인하기", key=f"review_{i}_{generate_short_id()}", on_click=self.view_reviews, args=(recommended,), use_container_width=True)
+                    st.button("최저가 구매하기", key=f"buy_{i}_{generate_short_id()}", on_click=self.go_to_purchase_page, args=(product,), use_container_width=True)
+        
+        if self.session.get_state("conditions_submitted") and not self.session.get_state("checked_reviews"):
+            self.session.set_state("show_restart_button", True)
 
     def render_aspect_chart(self, data):
         chart_data = pd.DataFrame({
@@ -139,8 +148,8 @@ class ChatbotRenderer:
 
         # Streamlit에 렌더링
         st.altair_chart(chart, theme="streamlit", use_container_width=True)
-        
-    def select_product(self, product):
+    
+    def go_to_purchase_page(self, product):
         search_url = f"https://search.shopping.naver.com/search/all?bt=-1&frm=NVSCPRO&query={product['name']}"
         js_code = f"""
         <script>
@@ -149,7 +158,7 @@ class ChatbotRenderer:
         """
         st.components.v1.html(js_code)
 
-    def render_reviews(self, product_data):
+    def view_reviews(self, product_data):
         product = product_data["product"]
         reviews = product_data["matching_reviews"]
 
@@ -167,20 +176,27 @@ class ChatbotRenderer:
         self.session.set_state("checked_reviews", True)
         self.session.add_message("assistant", f"{product['name']} 리뷰 요약\n\n{table_md}")
 
-        # print(self.session.get_state("conditions_submitted"), self.session.get_state("checked_reviews"))
-        # if self.session.get_state("conditions_submitted") and self.session.get_state("checked_reviews"):
-        #     self.render_restart_reset_button()
+        if self.session.get_state("conditions_submitted") and self.session.get_state("checked_reviews"):
+            self.session.set_state("show_restart_button", True)
+
+    def render_restart_reset_button(self):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("처음으로", key=f"restart_{generate_short_id()}", on_click=self.reset_to_start)
+        with col2:
+            st.button("다시 입력", key=f"reset_{generate_short_id()}", on_click=self.reset_conditions)
 
     def reset_to_start(self):
         st.markdown(BUTTON_CSS, unsafe_allow_html=True)
-        self.session.set_state("selected_main_category", None)
-        self.session.set_state("selected_sub_category", None)
-        self.session.set_state("conditions", None)
-        self.session.set_state("results", None)
-        self.session.set_state("conditions_submitted", False)
-        self.session.add_message("assistant", "처음으로 돌아갔습니다! 다시 시작해보세요.\n\n어떤 가전제품을 찾고 계신가요? 😊")
+        self.session.reset()
+        self.session.add_message("user", "처음으로")
+        self.session.add_message("assistant", "안녕하세요. 사용자 리뷰 기반으로 가전제품을 추천해드리는 챗봇 \"CHATBOT\" 입니다.\n\n어떤 가전제품을 찾고 계신가요? 😊")
         
     def reset_conditions(self):
         self.session.set_state("conditions", None)
         self.session.set_state("conditions_submitted", False)
+        self.session.set_state("selected_product", None)
+        self.session.set_state("checked_reviews", False)
+        self.session.set_state("show_restart_button", False)
+        self.session.add_message("user", "다시 입력")
         self.session.add_message("assistant", "조건을 다시 입력해주세요!")

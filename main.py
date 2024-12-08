@@ -29,8 +29,13 @@ class ChatbotUI:
             self.renderer.render_main_categories()
         elif not self.session.get_state("selected_sub_category"):
             self.renderer.render_sub_categories()
+        elif self.session.get_state("custom_sub_category") and not self.session.get_state("sub_category_input"):
+            self.renderer.render_sub_category_input()
         elif not self.session.get_state("conditions") or not self.session.get_state("selected_product"):
             self.renderer.render_conditions_input()
+
+        if self.session.get_state("show_restart_button"):
+            self.renderer.render_restart_reset_button()
 
     def run(self):
         st.set_page_config(page_title="Chatbot", page_icon="🤖", layout="wide")
