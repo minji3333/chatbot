@@ -86,7 +86,7 @@ class ChatbotRenderer:
                 product = recommended['product']
                 with st.expander(label=f"**{i + 1}. {product['name']}**", expanded=True):
                     aspect_ratio = self.api_client.get_aspect_ratio(product["id"])
-                    st.image("https://img.hankyung.com/photo/202406/01.36942977.1.jpg")
+                    st.image(product["photo"])
                     st.text(f"출시가격: {product['price']:,}원")
                     st.text(f"제조사: {product['manufacturer']}({product['release_year']})")
                     st.text(f"에너지 효율: {product['energy_efficiency']}({product['power_consumption']}W)")
