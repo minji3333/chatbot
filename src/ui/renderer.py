@@ -188,7 +188,7 @@ class ChatbotRenderer:
     def reset_to_start(self):
         self.session.reset()
         self.session.add_message("user", "처음으로")
-        self.session.add_message("assistant", "안녕하세요. 사용자 리뷰 기반으로 가전제품을 추천해드리는 챗봇 \"CHATBOT\" 입니다.\n\n어떤 가전제품을 찾고 계신가요? 😊")
+        self.session.add_message("assistant", "안녕하세요. 사용자 리뷰 기반으로 가전제품을 추천해드리는 챗봇 \"보아\" 입니다.\n\n어떤 가전제품을 찾고 계신가요? 😊")
         
     def reset_conditions(self):
         self.session.set_state("conditions", None)
